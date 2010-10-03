@@ -22,10 +22,11 @@ has 'filename'  => (
     isa         => 'Str',
 );
 
-#use overload
-#    bool        => sub {1}, 
-#    '""'        => 'full_message', 
-#    fallback    => 1;
+use overload
+    bool        => sub {1}, 
+    '""'        => 'full_message', 
+    fallback    => 1;
+
 
 sub throw {
     my ($class,@args) = @_;
