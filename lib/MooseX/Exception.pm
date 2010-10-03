@@ -16,14 +16,26 @@ our $EXCEPTION_CLASS;
 our $EXCEPTION_BASE = 'MooseX::Exception::Base';
 
 Moose::Exporter->setup_import_methods(
-    with_caller => [qw(has description extends method with requires excludes before after around override inner super)],
+    #with_caller => [qw(has description extends method with requires excludes before after around override inner super)],
+    with_caller => [qw(description method)],
     as_is       => [qw(exception blessed confess)],
 );
 
-sub meta_init {
+sub init_meta {
+    shift;
+    my %params = @_;
     
-    warn 'CALLED META INIT';
-    warn join ',',@_;
+    warn('INIT META WITH '.join ',',map { defined $_ ? $_ : 'undef'}@_);
+    my $meta_class = Moose->init_meta( @_ );
+    foreach my $method_name (qw(has extends with requires excludes before after around override inner super)) {
+        my $fq_name = $params{for_class} . '::' . $method_name;
+        $meta_class->add_package_symbol('&'.$method_name,sub {
+            my $meta = $EXCEPTION_CLASS || $meta_class;
+            my $method_fqn = 'Moose::'.$method_name;
+            no strict 'refs';
+            &{$method_fqn}($meta,@_);
+        });
+    }
 }
 
 sub _process_args {
@@ -36,10 +48,10 @@ sub _process_args {
             } else {
                 $return = { message => $_[0] };
             }
-        } elsif (scalar @_ % 2 == 0) {
+        } elsif (scalar(@_) % 2 == 0) {
             $return = { @_ };
         } else {
-            die('Not valid args '); # TODO throw some exception
+            $return = { message => shift, @_ };
         }
     }
     $return->{message} ||= delete $return->{error}
@@ -65,8 +77,8 @@ sub exception ($&) {
     
     # Run code
     {
-        local $EXCEPTION_CLASS = $class;
-        $code->();
+        local $EXCEPTION_CLASS = $meta;
+        $code->($meta);
     }
     
     unless (grep { $_ eq $EXCEPTION_BASE } $meta->linearized_isa()) {
@@ -84,25 +96,7 @@ sub description {
     confess "'description' may not be used outside of the exception blocks"
         unless defined $EXCEPTION_CLASS;
     
-    $EXCEPTION_CLASS->meta->add_method('description',sub { return $description })
-}
-
-# Implement Moose interface
-
-sub has {
-    my $caller = shift;
-    my $class = $EXCEPTION_CLASS || $caller;
-    $class->has(@_);
-}
-
-sub extends {
-    my $caller = shift;
-#    my $meta = $EXCEPTION_CLASS || Class::MOP::class_of($caller);
-#    Moose->throw_error("Must derive at least one class") unless @_;
-#    $meta->superclasses(@_);
-    
-    my $class = $EXCEPTION_CLASS || $caller;
-    $class->extends(@_);
+    $EXCEPTION_CLASS->add_method('description',sub { return $description })
 }
 
 sub method {
@@ -113,65 +107,17 @@ sub method {
         name         => $name,
         body         => $body,
     );
-    $meta->add_method($name => $body);
+    $meta->add_method($name => $method);
 }
 
-sub with {
-    my $caller = shift;
-    my $meta   = $EXCEPTION_CLASS || Class::MOP::class_of($caller);
-    Moose::Util::apply_all_roles($meta, @_);
-}
+exception 'MooseX::Exception::Exception::Base' => sub{
+    description('Internal MooseX::Exception');
+};
 
-sub before {
-    my $caller = shift;
-    my $modified_caller   = $EXCEPTION_CLASS || $caller;
-    Moose::Util::add_method_modifier($modified_caller, 'before', \@_);
-}
-
-sub after {
-    my $caller = shift;
-    my $modified_caller   = $EXCEPTION_CLASS || $caller;
-    Moose::Util::add_method_modifier($modified_caller, 'after', \@_);
-}
-
-sub around {
-    my $caller = shift;
-    my $modified_caller   = $EXCEPTION_CLASS || $caller;
-    Moose::Util::add_method_modifier($modified_caller, 'around', \@_);
-}
-
-sub requires {
-    my $caller = shift;
-    my $meta   = $EXCEPTION_CLASS || Class::MOP::class_of($caller);
-    Carp::croak "Must specify at least one method" unless @_;
-    $meta->add_required_methods(@_);
-}
-
-sub excludes {
-    my $caller = shift;
-    my $meta   = $EXCEPTION_CLASS || Class::MOP::class_of($caller);
-    Carp::croak "Must specify at least one role" unless @_;
-    $meta->add_excluded_roles(@_);
-}
-
-sub super {
-    return unless $Moose::SUPER_BODY;
-    $Moose::SUPER_BODY->(@Moose::SUPER_ARGS);
-}
-
-sub override {
-    my $caller = shift;
-    my $meta   = $EXCEPTION_CLASS || Class::MOP::class_of($caller);
-    my ($name, $code) = @_;
-    $meta->add_override_method_modifier($name, $code);
-}
-
-sub augment {
-    my $caller = shift;
-    my $meta   = $EXCEPTION_CLASS || Class::MOP::class_of($caller);
-    my ( $name, $method ) = @_;
-    $meta->add_augment_method_modifier( $name => $method );
-}
+#sub super {
+#    return unless $Moose::SUPER_BODY;
+#    $Moose::SUPER_BODY->(@Moose::SUPER_ARGS);
+#}
 
 =encoding utf8
 
