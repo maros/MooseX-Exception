@@ -27,6 +27,10 @@ use overload
     '""'        => 'full_message', 
     fallback    => 1;
 
+sub error {
+    my $self = shift;
+    $self->message(@_);
+}
 
 sub throw {
     my ($class,@args) = @_;
