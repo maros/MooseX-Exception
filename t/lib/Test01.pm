@@ -1,6 +1,5 @@
 package Test01;
 
-use Moose;
 use MooseX::Exception;
 
 exception 'X' => sub{
@@ -13,5 +12,8 @@ exception 'X2' => sub{
     description('slightly advanced exception');
     has 'test' => (is => 'rw');
 };
+
+__PACKAGE__->meta->make_immutable;
+no Moose;
 
 1;

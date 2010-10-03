@@ -68,9 +68,6 @@ sub throw {
             push @ignore_package, ( ref($i) eq 'ARRAY' ? @$i : $i );
         }
         
-        warn('-----------------------------');
-        warn(join ',',@ignore_class);
-        warn('-----------------------------');
         $args->{trace} = Devel::StackTrace->new(
             ignore_class     => \@ignore_class,
             ignore_package   => \@ignore_package,

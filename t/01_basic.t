@@ -3,7 +3,7 @@
 # t/01_basic.t - basic tests
 
 use Test::Most tests => 24 + 1;
-#use Test::NoWarnings;
+use Test::NoWarnings;
 
 use lib 't/lib/';
 use Test01;
