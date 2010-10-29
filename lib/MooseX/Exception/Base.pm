@@ -36,9 +36,6 @@ sub throw {
     my ($class,@args) = @_;
     my $args = MooseX::Exception::_process_args(@args);
     
-    $class = $class->rethrow($args)
-        if blessed $class && $class->isa(__PACKAGE__);
-    
     # Build basic exception info
     unless (exists $args->{line}
         && exists $args->{filename}
@@ -60,6 +57,9 @@ sub throw {
         }
     }
     
+    $class = $class->rethrow($args)
+        if blessed $class && $class->isa(__PACKAGE__);
+    
     die $class->new($args);
 }
 
@@ -67,9 +67,9 @@ sub description {
     return "An exception";
 }
 
-sub has_trace {
-    return 0;
-}
+#sub has_trace {
+#    return 0;
+#}
 
 sub rethrow {
     my ($self,@args) = @_;
