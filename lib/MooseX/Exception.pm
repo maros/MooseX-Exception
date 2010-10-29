@@ -2,40 +2,63 @@
 package MooseX::Exception;
 # ============================================================================
 
-use Moose::Exporter;
-use Moose qw(inner);
+use strict;
+use warnings;
 
 use version;
 our $AUTHORITY = 'cpan:MAROS';
 our $VERSION = version->new("1.00");
 
-use Carp 'confess';
-use Scalar::Util 'blessed';
+use Module::Pluggable 
+    search_path => ['MooseX::Exception::Feature'],
+    sub_name => 'features_available';
 
-our $EXCEPTION_CLASS;
-our $EXCEPTION_BASE = 'MooseX::Exception::Base';
-
-Moose::Exporter->setup_import_methods(
-    #with_caller => [qw(has description extends method with requires excludes before after around override inner super)],
-    with_caller => [qw(description method)],
-    as_is       => [qw(exception blessed confess)],
-);
-
-sub init_meta {
-    shift;
-    my %params = @_;
+sub import {
+    my ($proto,@features_requested) = @_;
+    my $class = ref $proto || $proto;
+    my( $package, undef, undef) = caller;
     
-    warn('INIT META WITH '.join ',',map { defined $_ ? $_ : 'undef'}@_);
-    my $meta_class = Moose->init_meta( @_ );
-    foreach my $method_name (qw(has extends with requires excludes before after around override inner super)) {
-        my $fq_name = $params{for_class} . '::' . $method_name;
-        $meta_class->add_package_symbol('&'.$method_name,sub {
-            my $meta = $EXCEPTION_CLASS || $meta_class;
-            my $method_fqn = 'Moose::'.$method_name;
-            no strict 'refs';
-            &{$method_fqn}($meta,@_);
-        });
+    my $export_name = $package."::moosex_exception_features_loaded";
+    
+    {
+        no strict 'refs';
+        return
+            if (defined ${$export_name});
+        *{$export_name} = {};
     }
+    
+    LOAD_FEATURE:
+    foreach my $feature_requested (@features_requested) {
+        if ($feature_requested eq ':all') {
+            AVAILABLE_FEATURE:
+            foreach my $feature_available (__PACKAGE__->features_available) {
+                load_feature($package,$feature_available);
+            }
+        } else {
+            load_feature($package,$feature_requested);
+        }
+    }
+}
+
+sub load_feature {
+    my ($package,$feature_requested,$features_loaded) = @_;
+    
+    my $export_name = $package."::moosex_exception_features_loaded";
+    my $feature_class = 'MooseX::Exception::Feature::'.ucfirst($feature_requested);
+    
+    {
+        no strict 'refs';
+        return
+            if (exists ${$export_name}->{$feature_requested});
+        ${$export_name}->{$feature_requested} = $feature_class;
+    }
+    
+    Class::MOP::load_class($feature_class);
+    
+    eval qq[
+        package $package;
+        $feature_class->import();
+    ];
 }
 
 sub _process_args {
@@ -59,65 +82,6 @@ sub _process_args {
     return $return;
 }
 
-sub caught {
-    my $exception = $@;
-    
-    return $exception 
-        unless $_[1];
-    
-    return unless blessed($exception) && $exception->isa( $_[1] );
-    return $exception;
-
-}
-
-sub exception ($&) {
-    my ($class,$code) = @_;
-    my $meta = Moose::Meta::Class->create($class);
-    $meta->add_method( meta => sub { $meta } );
-    
-    # Run code
-    {
-        local $EXCEPTION_CLASS = $meta;
-        $code->($meta);
-    }
-    
-    unless (grep { $_ eq $EXCEPTION_BASE } $meta->linearized_isa()) {
-        my @superclasses = $meta->superclasses;
-        push(@superclasses,$EXCEPTION_BASE);
-        $meta->superclasses(@superclasses);
-    }
-
-    $meta->make_immutable();
-}
-
-sub description {
-    my ($caller,$description) = @_;
-    
-    confess "'description' may not be used outside of the exception blocks"
-        unless defined $EXCEPTION_CLASS;
-    
-    $EXCEPTION_CLASS->add_method('description',sub { return $description })
-}
-
-sub method {
-    my ($caller,$name,$body) = @_;
-    my $meta = $EXCEPTION_CLASS || Class::MOP::class_of($caller);
-    my $method = $meta->method_metaclass->wrap(
-        package_name => $caller,
-        name         => $name,
-        body         => $body,
-    );
-    $meta->add_method($name => $method);
-}
-
-exception 'MooseX::Exception::Exception::Base' => sub{
-    description('Internal MooseX::Exception');
-};
-
-#sub super {
-#    return unless $Moose::SUPER_BODY;
-#    $Moose::SUPER_BODY->(@Moose::SUPER_ARGS);
-#}
 
 =encoding utf8
 
