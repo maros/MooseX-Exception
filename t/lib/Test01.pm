@@ -1,6 +1,7 @@
 package Test01;
 
-use MooseX::Exception;
+use Moose;
+use MooseX::Exception qw(Define);
 
 exception 'X' => sub{
     # calls extends('MooseX::Exception::Base') implicitly

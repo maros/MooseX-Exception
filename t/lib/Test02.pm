@@ -1,10 +1,10 @@
 package Test02;
 
 use Moose;
-use MooseX::Exception;
+use MooseX::Exception qw(Define);
 
 exception 'X' => sub{
-    extends('MooseX::Exception::Extended');
+    with('MooseX::Exception::Extended');
 };
 
 exception 'X2' => sub{

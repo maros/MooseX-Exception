@@ -1,6 +1,7 @@
 package Test02;
 
-use MooseX::Exception::Feature::TryCatch;
+use Moose;
+use MooseX::Exception qw(TryCatch);
 
 try {
     die('hase');
