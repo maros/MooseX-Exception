@@ -27,6 +27,11 @@ has 'egid' => (
     is          => 'rw',
     default     => sub { $) },
 );
+has 'time' => (
+    is          => 'rw',
+    isa         => 'Int',
+    default     => sub { CORE::time() }
+);
 
 no Moose::Role;
 
