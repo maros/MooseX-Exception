@@ -10,19 +10,20 @@ use Carp 'confess';
 use Scalar::Util 'blessed';
 
 our $EXCEPTION_CLASS;
+our @EXCEPTION_ROLES;
 our $EXCEPTION_BASE = 'MooseX::Exception::Base';
 
 Moose::Exporter->setup_import_methods(
-    #with_caller => [qw(has description method with requires excludes before after around override inner super)],
-    with_caller => [qw(description method)],
-    as_is       => [qw(exception blessed confess with)],
+    #with_caller => [qw(has description method  requires excludes before after around override inner super)],
+    with_caller => [qw(description method with)],
+    as_is       => [qw(define exception blessed confess)],
 );
 
 sub init_meta {
     shift;
     my %params = @_;
     
-    warn('INIT META WITH '.join ',',map { defined $_ ? $_ : 'undef'}@_);
+    #warn('INIT META WITH '.join ',',map { defined $_ ? $_ : 'undef'}@_);
     my $meta_class = Moose->init_meta( @_ );
     foreach my $method_name (qw(has extends requires excludes before after around override inner super)) {
         my $fq_name = $params{for_class} . '::' . $method_name;
@@ -33,27 +34,7 @@ sub init_meta {
             &{$method_fqn}($meta,@_);
         });
     }
-}
-
-sub _process_args {
-    my $return = {};
-    if (scalar @_) {
-        if (scalar @_ == 1) {
-            if (ref($_[0]) eq 'HASH') {
-                # Shalow copy so that we do not alter anything
-                $return = { %{$_[0]} };
-            } else {
-                $return = { message => $_[0] };
-            }
-        } elsif (scalar(@_) % 2 == 0) {
-            $return = { @_ };
-        } else {
-            $return = { message => shift, @_ };
-        }
-    }
-    $return->{message} ||= delete $return->{error}
-        if exists $return->{error};
-    return $return;
+    return $meta_class;
 }
 
 sub caught {
@@ -66,24 +47,36 @@ sub caught {
     return $exception;
 }
 
-sub exception ($&) {
+sub exception ($;$) {
     my ($class,$code) = @_;
+    
     my $meta = Moose::Meta::Class->create($class);
     $meta->add_method( meta => sub { $meta } );
     
     # Run code
-    {
+    if (defined $code) {
+        local @EXCEPTION_ROLES = ();
         local $EXCEPTION_CLASS = $meta;
         $code->($meta);
+        unless (grep { $_ eq $EXCEPTION_BASE } $meta->linearized_isa()) {
+            my @superclasses = $meta->superclasses;
+            push(@superclasses,$EXCEPTION_BASE);
+            $meta->superclasses(@superclasses);
+        }
+        if (scalar @EXCEPTION_ROLES) {
+#            warn join "::::",@EXCEPTION_ROLES;
+            Moose::Util::apply_all_roles($meta,@EXCEPTION_ROLES);
+        }
+    } else {
+        $meta->superclasses($EXCEPTION_BASE);
     }
     
-    unless (grep { $_ eq $EXCEPTION_BASE } $meta->linearized_isa()) {
-        my @superclasses = $meta->superclasses;
-        push(@superclasses,$EXCEPTION_BASE);
-        $meta->superclasses(@superclasses);
-    }
-
     $meta->make_immutable();
+}
+
+sub define (&;@) {
+    my ($code) = @_;
+    return $code;
 }
 
 sub description {
@@ -96,7 +89,20 @@ sub description {
 }
 
 sub with {
-    my ($caller,@c)
+    my ($caller,@roles) = @_;
+    
+    if (defined $EXCEPTION_CLASS) {
+        foreach my $element (@roles) {
+            unless (ref $element
+                || $element =~ /.+::.+/) {
+                push(@EXCEPTION_ROLES,'MooseX::Exception::Role::'.$element);
+            } else {
+                push(@EXCEPTION_ROLES,$element);
+            }
+        }
+    } else {
+        Moose::Util::apply_all_roles($caller,@roles);
+    }
 }
 
 sub method {
@@ -110,11 +116,13 @@ sub method {
     $meta->add_method($name => $method);
 }
 
-exception 'MooseX::Exception::Exception::Base' => sub{
-    description('Internal MooseX::Exception');
-};
-
+#exception 'MooseX::Exception::Exception::Base' => sub{
+#    description('Internal MooseX::Exception');
+#};
+#
 #sub super {
 #    return unless $Moose::SUPER_BODY;
 #    $Moose::SUPER_BODY->(@Moose::SUPER_ARGS);
 #}
+
+1;
