@@ -9,18 +9,6 @@ has 'message'  => (
     isa         => 'Str',
     required    => 1,
 );
-has 'package'  => (
-    is          => 'rw',
-    isa         => 'Str',
-);
-has 'line'  => (
-    is          => 'rw',
-    isa         => 'Int',
-);
-has 'filename'  => (
-    is          => 'rw',
-    isa         => 'Str',
-);
 
 use overload
     bool        => sub {1}, 
