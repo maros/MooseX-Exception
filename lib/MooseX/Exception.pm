@@ -16,6 +16,8 @@ use Module::Pluggable
 
 sub import {
     my ($proto,@features_requested) = @_;
+    
+    # Get caller and class
     my $class = ref $proto || $proto;
     my( $package, undef, undef) = caller;
     
@@ -23,43 +25,47 @@ sub import {
     
     {
         no strict 'refs';
-        return
-            if (defined ${$export_name});
-        *{$export_name} = {};
-    }
-    
-    LOAD_FEATURE:
-    foreach my $feature_requested (@features_requested) {
-        if ($feature_requested eq ':all') {
-            AVAILABLE_FEATURE:
-            foreach my $feature_available (__PACKAGE__->features_available) {
-                load_feature($package,$feature_available);
-            }
-        } else {
-            load_feature($package,$feature_requested);
+        unless (defined ${$export_name}) {
+            *{$export_name} = {};
         }
     }
-}
-
-sub load_feature {
-    my ($package,$feature_requested,$features_loaded) = @_;
+    my (%features_toload,$feature_toload_last);
     
-    my $export_name = $package."::moosex_exception_features_loaded";
-    my $feature_class = 'MooseX::Exception::Feature::'.ucfirst($feature_requested);
-    
-    {
-        no strict 'refs';
-        return
-            if (exists ${$export_name}->{$feature_requested});
-        ${$export_name}->{$feature_requested} = $feature_class;
+    # Determine which features to load
+    GET_FEATURE:
+    foreach my $feature_requested (@features_requested) {
+        if (ref $feature_requested eq 'ARRAY') {
+            if (defined $feature_toload_last) {
+                $features_toload{$feature_toload_last} = $feature_requested;
+            }
+        } else {
+            if ($feature_requested eq ':all') {
+                foreach my $feature_all (__PACKAGE__->features_available) {
+                    $features_toload{$feature_all} = [];
+                }
+            } else {
+                my $feature_class = 'MooseX::Exception::Feature::'.ucfirst($feature_requested);
+                $features_toload{$feature_class} = [];
+                $feature_toload_last = $feature_class;
+            }
+        }
     }
     
-    Class::MOP::load_class($feature_class);
-    
-    eval qq[
-        package $package;
-        $feature_class->import();
-    ];
+    # Load all selected features
+    LOAD_FEATURE: 
+    foreach my $feature_toload (keys %features_toload) {
+        no strict 'refs';
+        next LOAD_FEATURE
+            if (exists ${$export_name}->{$feature_toload});
+        ${$export_name}->{$feature_toload} = 1;
+        
+        Class::MOP::load_class($feature_toload);
+        
+        # Reset arguments for goto
+        @_ = ($feature_toload,@{$features_toload{$feature_toload}});
+        
+        goto &{$feature_toload.'::import'};
+    }
 }
 
 sub _process_args {
@@ -82,6 +88,8 @@ sub _process_args {
         if exists $return->{error};
     return $return;
 }
+
+package MooseX::Exception;
 
 
 =encoding utf8
