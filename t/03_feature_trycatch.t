@@ -22,7 +22,7 @@ try {
     die('hase2');
 } catch {
     my $msg = $_;
-    isa_ok($msg,'MooseX::Exception::X::TryCatch');
+    isa_ok($msg,'MooseX::Exception::TryCatch');
     like($msg->message,qr/^hase2\s/,'Message ok');
 };
 

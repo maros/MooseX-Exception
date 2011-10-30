@@ -1,21 +1,7 @@
 # -*- perl -*-
 
-# t/04_feature_moose.t - autodie exception handling
+# t/06_meta.t - test meta 
 
 use Test::Most tests => 3 + 1;
 use Test::NoWarnings;
 
-use MooseX::Exception qw(Autodie);
-
-eval {
-    my $fh;
-    open $fh,'/unknown/file';
-    close $fh;
-};
-if ($@) {
-    isa_ok($@,'MooseX::Exception::Autodie');
-    isa_ok($@,'MooseX::Exception::Base');
-    is($@,q[No such file or directory],'error message ok');
-} else {
-    fail('No exception');
-}

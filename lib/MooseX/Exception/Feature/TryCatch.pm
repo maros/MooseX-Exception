@@ -76,7 +76,7 @@ sub try(&;@) {
     # Handle error
     if ($failed) {
         unless (ref $error)  {
-            $error = MooseX::Exception::X::TryCatch->new( 
+            $error = MooseX::Exception::TryCatch->new( 
                 error   => $error,
             );
         }
