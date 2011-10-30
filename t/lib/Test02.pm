@@ -4,11 +4,12 @@ use Moose;
 use MooseX::Exception qw(Define);
 
 exception 'X' => sub{
-    with('MooseX::Exception::Extended');
+    with qw(Location);
 };
 
 exception 'X2' => sub{
     extends('X');
+    with qw(Trace);
     has 'test' => (is => 'rw',required => 1);
     method 'as_string' => sub {
         my ($self) = @_;
@@ -16,13 +17,17 @@ exception 'X2' => sub{
     };
 };
 
-# Combine with moose to see if if it interfers
+# Combine with moose to see if it interfers
 
 has 'test' => (
     is          => 'rw',
 );
 
 sub some_method {
+    return 1;
+}
+
+sub as_string {
     return 1;
 }
 
