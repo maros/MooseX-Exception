@@ -5,9 +5,10 @@ package MooseX::Exception;
 use strict;
 use warnings;
 
-use version;
 our $AUTHORITY = 'cpan:MAROS';
-our $VERSION = version->new("1.00");
+our $VERSION = '1.00';
+
+use Class::MOP;
 
 use Module::Pluggable 
     search_path => ['MooseX::Exception::Feature'],
