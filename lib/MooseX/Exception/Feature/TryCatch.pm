@@ -5,6 +5,7 @@ use utf8;
 
 use Moose::Exporter;
 #use MooseX::Exception;
+use MooseX::Exception::TryCatch;
 
 Moose::Exporter->setup_import_methods(
     as_is       => [qw(try catch where finally)],

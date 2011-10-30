@@ -24,40 +24,21 @@ sub throw {
     my ($class,@args) = @_;
     my $args = MooseX::Exception::_process_args(@args);
     
-    # Build basic exception info
-    unless (exists $args->{line}
-        && exists $args->{filename}
-        && exists $args->{package}) {
-        # TODO refactor to role or some other class 
-        # Reuse existing stack trace
-        if (exists $args->{trace}
-            && ref($args->{trace}) eq 'Devel::StackTrace') {
-            my $trace_frame = $args->{trace}->frame(0);
-            $args->{package} ||= $trace_frame->package;
-            $args->{filename} ||= $trace_frame->filename;
-            $args->{line} ||= $trace_frame->line;
-        } else {
-            # TODO ignore caller if it is from this package ...
-            my ($package, $filename, $line) = caller;
-            $args->{package} ||= $package;
-            $args->{filename} ||= $filename;
-            $args->{line} ||= $line;
-        }
-    }
-    
     $class = $class->rethrow($args)
         if blessed $class && $class->isa(__PACKAGE__);
     
     die $class->new($args);
 }
 
+sub BUILDARGS {
+    my $class = shift;
+    my $args = MooseX::Exception::_process_args(@_);
+    return $class->SUPER::BUILDARGS($args);
+}
+
 sub description {
     return "An exception";
 }
-
-#sub has_trace {
-#    return 0;
-#}
 
 sub rethrow {
     my ($self,@args) = @_;
@@ -100,7 +81,6 @@ sub rethrow_as {
 
 sub as_string {
     my ($self) = @_;
-    
     return $self->full_message;
 }
 
