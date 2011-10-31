@@ -13,8 +13,7 @@ readme_markdown_from $from;
 perl_version    '5.008';
 
 # Specific dependencies
-requires        'Moose'                     => '0.94';
-requires        'version'                   => 0;
+requires        'Moose'                     => '2.0301';
 
 build_requires  'Test::Most'                => 0;
 
