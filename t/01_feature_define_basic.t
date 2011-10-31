@@ -2,11 +2,32 @@
 
 # t/01_basic.t - basic tests
 
-use Test::Most tests => 29 + 1;
+use Test::Most tests => 31 + 1;
 use Test::NoWarnings;
 
-use lib 't/lib/';
-use Test01;
+{
+    package t::test01;
+
+    use Moose;
+    use MooseX::Exception qw(Define);
+    
+    exception "X" => define {
+        # calls extends('MooseX::Exception::Base') implicitly
+        with('Location');
+        description('basic exception');
+    };
+    
+    exception "X2" => define {
+        extends('X');
+        description('slightly advanced exception');
+        has 'test' => (is => 'rw');
+    };
+    
+    exception "X3";
+    
+    __PACKAGE__->meta->make_immutable;
+    no Moose;
+}
 
 # 1st test
 {
@@ -82,4 +103,11 @@ use Test01;
     isa_ok($e1,'MooseX::Exception::Base');
     is($e1->message,'test3','Message ok');
     ok(! $e1->can('line'),'No location available');
+}
+
+# 4th test
+{
+    my $meta = X3->meta;
+    isa_ok($meta,'Moose::Meta::Class');
+    is($meta->is_immutable,1,'Is immutable');
 }

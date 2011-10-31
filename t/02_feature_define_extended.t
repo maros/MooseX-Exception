@@ -5,8 +5,46 @@
 use Test::Most tests => 19 + 1;
 use Test::NoWarnings;
 
-use lib 't/lib/';
-use Test02;
+{
+    package t::test02;
+    
+    use Moose;
+    use MooseX::Exception qw(Define);
+    
+    exception 'X' => sub{
+        with qw(Location);
+    };
+    
+    exception 'X2' => sub{
+        extends('X');
+        with qw(Trace);
+        has 'test' => (is => 'rw',required => 1);
+        method 'as_string' => sub {
+            my ($self) = @_;
+            return $self->test .':'.$self->message;
+        };
+    };
+    
+    # Combine with moose to see if it interfers
+    
+    has 'test' => (
+        is          => 'rw',
+    );
+    
+    sub some_method {
+        return 1;
+    }
+    
+    sub as_string {
+        return 1;
+    }
+    
+    around 'some_method' => sub {
+        return 2;
+    };
+    
+    __PACKAGE__->meta->make_immutable;
+}
 
 # 1st test
 {
@@ -47,7 +85,7 @@ use Test02;
 
 # test if ordinary moose still works
 {
-    my $test = Test02->new(test => 'hase');
+    my $test = t::test02->new(test => 'hase');
     is($test->test,'hase','Basic Moose accessor ok');
     is($test->some_method,'2','Basic Moose method modifier ok');
     isa_ok($test->meta,'Moose::Meta::Class','Has meta class');

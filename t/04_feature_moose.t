@@ -5,11 +5,25 @@
 use Test::Most tests => 8 + 1;
 use Test::NoWarnings;
 
-use lib 't/lib/';
-use Test04;
+{
+    package t::test04;
+    
+    use Moose;
+    use MooseX::Exception qw(Moose);
+    
+    has 'test01' => (
+        is          => 'rw',
+        isa         => 'Int',
+    );
+    
+    has 'test02' => (
+        is          => 'ro',
+    );
+    __PACKAGE__->meta->make_immutable;
+}
 
 eval {
-    Test04->new( test01 => 'h' );
+    t::test04->new( test01 => 'h' );
 };
 if ($@) {
     isa_ok($@,'MooseX::Exception::Moose');
@@ -20,7 +34,7 @@ if ($@) {
 }
 
 eval {
-    my $test = Test04->new( test01 => '1' );
+    my $test = t::test04->new( test01 => '1' );
     $test->test02('2');
 };
 if ($@) {
