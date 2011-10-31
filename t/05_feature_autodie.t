@@ -2,8 +2,9 @@
 
 # t/04_feature_moose.t - autodie exception handling
 
-use Test::Most tests => 3 + 1;
+use Test::Most tests => 4 + 1;
 use Test::NoWarnings;
+my $x = 'hase';
 
 use MooseX::Exception qw(Autodie);
 
@@ -19,3 +20,11 @@ if ($@) {
 } else {
     fail('No exception');
 }
+
+no MooseX::Exception;
+
+lives_ok {
+    my $fh;
+    open $fh,'/unknown/file';
+    close $fh;
+} 'Autodie unloaded';
