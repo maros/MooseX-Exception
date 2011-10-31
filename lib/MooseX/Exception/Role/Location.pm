@@ -47,7 +47,5 @@ around 'BUILDARGS' => sub {
     return $self->$orig($args);
 };
 
-
-
 no Moose::Role;
 1;

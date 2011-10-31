@@ -6,8 +6,6 @@ use Moose;
 extends qw(MooseX::Exception::Base);
 with qw(MooseX::Exception::Role::Location);
 
-$INC{'MooseX/Exception/X/Autodie.pm'} = 1;
-
 has [qw(function context eval_error return)] => (
     is              => 'rw',
 );

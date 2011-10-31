@@ -7,7 +7,7 @@ extends qw(MooseX::Exception::Base);
 with qw(MooseX::Exception::Role::Location);
 
 sub description {
-    return "Fallback try-catch exception";
+    return "try-catch exception";
 }
 
 __PACKAGE__->meta->make_immutable;
