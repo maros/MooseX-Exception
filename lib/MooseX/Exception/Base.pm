@@ -3,6 +3,7 @@ package MooseX::Exception::Base;
 # ============================================================================
 
 use Moose;
+use MooseX::Exception;
 
 has 'message'  => (
     is          => 'rw',
