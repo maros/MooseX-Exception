@@ -2,13 +2,26 @@
 
 # t/02_extended.t - extended tests
 
-use Test::Most tests => 14 + 1;
+use Test::Most tests => 15 + 1;
 use Test::NoWarnings;
 
 use MooseX::Exception qw(TryCatch);
 
-use lib 't/lib/';
-use Test01;
+{
+    package t::test01;
+
+    use Moose;
+    use MooseX::Exception qw(Define);
+    
+    exception "X";
+    
+    exception "X2" => define {
+        extends('X');
+    };
+    
+    __PACKAGE__->meta->make_immutable;
+    no Moose;
+}
 
 # Test 1 - basic try
 lives_ok {
@@ -65,7 +78,10 @@ catch {
     fail('Shoud not catch fallback');
 }
 finally {
-    pass('Run finally');
+    pass('Run finally 1');
+}
+finally {
+    pass('Run finally 2');
 };
 
 # Test 5 - wrong setup

@@ -4,7 +4,6 @@
 
 use Test::Most tests => 4 + 1;
 use Test::NoWarnings;
-my $x = 'hase';
 
 use MooseX::Exception qw(Autodie);
 

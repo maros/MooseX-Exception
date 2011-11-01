@@ -2,7 +2,7 @@
 
 # t/01_basic.t - basic tests
 
-use Test::Most tests => 31 + 1;
+use Test::Most tests => 32 + 1;
 use Test::NoWarnings;
 
 {
@@ -108,6 +108,7 @@ use Test::NoWarnings;
 # 4th test
 {
     my $meta = X3->meta;
+    isa_ok('X3','MooseX::Exception::Base');
     isa_ok($meta,'Moose::Meta::Class');
     is($meta->is_immutable,1,'Is immutable');
 }
