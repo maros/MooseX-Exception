@@ -28,6 +28,7 @@ around 'BUILDARGS' => sub {
             my $caller_package = $args->{caller}[0];
             if ($caller_package->isa('MooseX::Exception::Base')) {
                 $ok = 1;
+                return 0;
             }
             return $ok;
         }
@@ -72,7 +73,7 @@ around 'BUILDARGS' => sub {
 sub as_string {
     my ($self) = @_;
     
-    my $str = $self->as_string;
+    my $str = $self->full_message;
     $str .= "\n\n" . $self->trace->as_string
         if $self->show_trace && $self->has_trace;
     

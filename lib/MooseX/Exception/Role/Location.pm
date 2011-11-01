@@ -26,8 +26,7 @@ around 'BUILDARGS' => sub {
     unless (exists $args->{line}
         && exists $args->{file}
         && exists $args->{package}) {
-        # TODO refactor to role or some other class 
-        # Reuse existing stack trace
+
         if (exists $args->{trace}
             && ref($args->{trace}) eq 'Devel::StackTrace') {
             my $trace_frame = $args->{trace}->frame(0);
@@ -35,11 +34,16 @@ around 'BUILDARGS' => sub {
             $args->{file} ||= $trace_frame->filename;
             $args->{line} ||= $trace_frame->line;
         } else {
-            # TODO ignore caller if it is from this package ...
-            my ($package, $file, $line) = caller(4);
-            $args->{package} ||= $package;
-            $args->{file} ||= $file;
-            $args->{line} ||= $line;
+            for (1..10) {
+                my ($package_test) = caller($_);
+                if ($package_test->isa('MooseX::Exception::Base')) {
+                    my ($package, $file, $line) = caller($_ + 1);
+                    $args->{package} ||= $package;
+                    $args->{file} ||= $file;
+                    $args->{line} ||= $line;
+                    last;
+                }
+            }
         }
     }
     
