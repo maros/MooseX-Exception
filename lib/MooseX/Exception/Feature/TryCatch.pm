@@ -73,6 +73,8 @@ sub try(&;@) {
         $error = $@;
     }
     
+    @finally = map { MooseX::Exception::Feature::TryCatch::ScopeGuard->_new($_,$failed ? $error:()) } @finally;
+    
     # Handle error
     if ($failed) {
         unless (ref $error)  {
@@ -84,20 +86,17 @@ sub try(&;@) {
             if (blessed $error) {
                 foreach my $catch_where (@catch_where) {
                     if ($error->isa($catch_where->[0])) {
-                        _run_block($catch_where->[1],@finally);
-                        return;
+                        return $catch_where->[1]->($error);
                     }
                 }
             }
             if ($catch_all) {
-                _run_block($catch_all);
+               return  $catch_all->($error);
             }
-            _run_block(@finally);
             return;
         }
     }
     
-    _run_block(@finally);
     return $wantarray ? @ret : $ret[0];
 }
 
@@ -125,81 +124,20 @@ sub where($;@) {
     );
 }
 
-sub _run_block {
-    my (@code_blocks) = @_;
+{
+    package # hide from PAUSE
+        MooseX::Exception::Feature::TryCatch::ScopeGuard;
     
-    foreach my $code (@code_blocks) {
-        $code->();
+    sub _new {
+        shift;
+        bless [ @_ ];
+    }
+    
+    sub DESTROY {
+        my ($self) = @_; 
+        my $code = shift(@{$self});
+        $code->(@$self);
     }
 }
-
-1;
-
-
-#sub try (&;@) {
-#    my ($code,@e) = @_;
-#}
-#
-#sub catch (&;$) {
-#    my ($code) = @_;
-#}
-#
-#sub finally (&;$) {
-#    my ($code) = @_;
-#}
-
-
-#
-#try {
-#    die('XXX');
-#}
-#catch {
-#    #do something
-#}
-#finally {
-#    # cleanup
-#}
-#
-#try {
-#    die('XXX');
-#}
-#catch {
-#    isa($_)
-#}
-#finally {
-#    # cleanup
-#}
-
-
-
-#my ( $error, $failed, @ret );
-#
-#my $wantarray = wantarray;
-#
-#{
-#    local $@;
-#
-#    $failed = not eval {
-#
-#        # note code duplication
-#        if ( $wantarray ) {
-#            @ret = ...;
-#        } elsif ( defined $wantarray ) {
-#            $ret[0] = ...;
-#        } else {
-#            ...;
-#        }
-#  
-#        return 1;
-#    };
-#
-#    $error = $@;
-#}
-#
-#if ( $failed ) {
-#    warn $error;
-#} else {
-#    return $wantarray ? @value : $ret[0];
-#}
 
 1;
