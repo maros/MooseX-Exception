@@ -36,7 +36,10 @@ around 'BUILDARGS' => sub {
         } else {
             for (1..10) {
                 my ($package_test) = caller($_);
-                if ($package_test->isa('MooseX::Exception::Base')) {
+                last
+                    unless defined $package_test;
+                if ($package_test->isa('MooseX::Exception::Base')
+                    || $package_test =~ m/^MooseX::Exception::Feature::/) {
                     my ($package, $file, $line) = caller($_ + 1);
                     $args->{package} ||= $package;
                     $args->{file} ||= $file;
