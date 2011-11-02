@@ -12,7 +12,7 @@ sub init_meta {
     my ($class, %args) = (shift, @_);
     
     my $meta = Moose->init_meta(%args);
-    $meta->error_class("MooseX::Exception::Moose");
+    $meta->error_class("MooseX::Exception::Moose"); # TODO customize
     
     return $meta;
 }

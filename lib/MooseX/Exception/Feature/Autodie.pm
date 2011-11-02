@@ -11,7 +11,7 @@ use MooseX::Exception::Autodie;
 use autodie ();
 our @ISA = qw(autodie);
 
-sub exception_class { return "MooseX::Exception::Autodie" };
+sub exception_class { return "MooseX::Exception::Autodie" }; # TODO customize
 
 sub import {
     goto &autodie::import;

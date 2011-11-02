@@ -29,7 +29,7 @@ sub try(&;@) {
         
         if ( $reference eq 'MooseX::Exception::Feature::TryCatch::Where' ) {
             if (defined $current_where_condition) {
-                MooseX::Exception::TryCatch->throw('Detected unbalanced where/catch blocks');
+                MooseX::Exception::TryCatch->throw('Detected unbalanced where/catch blocks'); # TODO customize
             }
             $current_where_condition = $$part;
         } elsif ( $reference eq 'MooseX::Exception::Feature::TryCatch::Catch' ) {
@@ -37,14 +37,14 @@ sub try(&;@) {
                 push(@catch_where,[ $current_where_condition,$$part ]);
                 undef $current_where_condition;
             } elsif (defined $catch_all) {
-                MooseX::Exception::TryCatch->throw('Detected multiple catch blocks');
+                MooseX::Exception::TryCatch->throw('Detected multiple catch blocks'); # TODO customize
             } else {
                 $catch_all = $$part
             }
         } elsif ( $reference eq 'MooseX::Exception::Feature::TryCatch::Finally' ) {
            push(@finally,$$part);
         } else {
-            MooseX::Exception::TryCatch->throw("Unknown part given '$reference'");
+            MooseX::Exception::TryCatch->throw("Unknown part given '$reference'"); # TODO customize
         }
     }
     
@@ -80,7 +80,7 @@ sub try(&;@) {
         unless (ref $error)  {
             $error = MooseX::Exception::TryCatch->new( 
                 error   => $error,
-            );
+            ); # TODO customize
         }
         foreach ($error) {
             if (blessed $error) {

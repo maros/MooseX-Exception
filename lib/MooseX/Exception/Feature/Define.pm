@@ -9,9 +9,9 @@ use Moose qw(inner);
 use Carp 'confess';
 use Scalar::Util 'blessed';
 
-our $EXCEPTION_CLASS;
+our $EXCEPTION_CLASS; # TODO customize
 our @EXCEPTION_ROLES;
-our $EXCEPTION_BASE = 'MooseX::Exception::Base';
+our $EXCEPTION_BASE = 'MooseX::Exception::Base'; # TODO customize
 
 Moose::Exporter->setup_import_methods(
     #with_caller => [qw(has description method  requires excludes before after around override inner super)],
