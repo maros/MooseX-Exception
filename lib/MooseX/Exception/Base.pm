@@ -23,12 +23,13 @@ sub error {
 
 sub throw {
     my ($class,@args) = @_;
-    my $args = MooseX::Exception::_process_args(@args);
     
-    $class = $class->rethrow($args)
-        if blessed $class && $class->isa(__PACKAGE__);
-    
-    die $class->new($args);
+    if (blessed $class) {
+        d$class->rethrow(@args)
+    } else {
+        my $args = MooseX::Exception::_process_args(@args);
+        die $class->new($args);
+    }
 }
 
 sub BUILDARGS {
