@@ -114,40 +114,34 @@ sub _process_args {
     return $return;
 }
 
-package MooseX::Exception;
-
-
 =encoding utf8
 
 =head1 NAME
 
-TEMPLATE - Description
+MooseX::Exception - Moose based extendable exception framework
 
 =head1 SYNOPSIS
 
-  use TEMPLATE;
+ use MooseX::Exception qw(Define Autodie MyFeature);
 
 =head1 DESCRIPTION
 
-=head1 METHODS
 
-=head2 Constructors
 
-=head2 Accessors 
-
-=head2 Methods
-
-=head1 EXAMPLE
+=head1 EXTENDING
 
 =head1 CAVEATS 
 
 =head1 SEE ALSO
 
+Most idead and concepts are borrowed from other distributions such as 
+L<Try-Tiny>, L<Exception-Class>, L<Autodie> and many more.
+
 =head1 SUPPORT
 
 Please report any bugs or feature requests to 
-C<bug-TEMPLATE@rt.cpan.org>, or through the web interface at
-L<http://rt.cpan.org/Public/Bug/Report.html?Queue=TEMPLATE>.  
+C<bug-moosex-exception@rt.cpan.org>, or through the web interface at
+L<http://rt.cpan.org/Public/Bug/Report.html?Queue=MooseX-Exception>.  
 I will be notified, and then you'll automatically be notified of progress on 
 your report as I make changes.
 
@@ -160,7 +154,7 @@ your report as I make changes.
 
 =head1 COPYRIGHT
 
-TEMPLATE is Copyright (c) 2010 Maroš Kollár.
+TEMPLATE is Copyright (c) 2011 Maroš Kollár.
 
 This library is free software and may be distributed under the same terms as 
 perl itself.

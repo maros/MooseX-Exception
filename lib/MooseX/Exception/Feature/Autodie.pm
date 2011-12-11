@@ -22,3 +22,34 @@ sub unimport {
 }
 
 1;
+
+=encoding utf8
+
+=head1 NAME
+
+MooseX::Exception::Feature::Autodie - Enable autodie behaviour
+
+=head1 SYNOPSIS
+
+ use MooseX::Exception qw(Autodie);
+ 
+ eval {
+    my $fh;
+    open $fh,'/unknown/file';
+    close $fh;
+ };
+ if ($@) {
+    print 'An error occured while opening a file '.$@->message
+ }
+
+=head1 DESCRIPTION
+
+This exception feature enabled autodie in the current package scope. In 
+cotrast to vanilla autodie, this implementation will throw
+L<MooseX::Exception::Autodie> objects as exceptions.
+
+=head1 SEE ALSO
+
+L<autodie>
+
+=cut
