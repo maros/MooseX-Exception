@@ -25,7 +25,7 @@ sub throw {
     my ($class,@args) = @_;
     
     if (blessed $class) {
-        d$class->rethrow(@args)
+        $class->rethrow(@args)
     } else {
         my $args = MooseX::Exception::_process_args(@args);
         die $class->new($args);
