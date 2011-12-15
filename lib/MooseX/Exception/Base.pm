@@ -99,3 +99,57 @@ sub full_message {
 __PACKAGE__->meta->make_immutable;
 no Moose;
 1;
+
+=encoding utf8
+
+=head1 NAME
+
+MooseX::Exception::Base - Basic exception class
+
+=head1 SYNOPSIS
+
+ package MyException;
+ use Moose;
+ extends qw(MooseX::Exception::Base)
+ 1;
+
+Somewhere else
+
+ eval {
+     ...
+     MyException->throw("A fatal error happened")
+        if $is_error;
+     ...
+ };
+ if (my $error = $@) {
+     say "An error happened: ".$error->message;
+     $error->rethrow();
+ };
+
+=head1 DESCRIPTION
+
+This class acts as the basic exception class for all MooseX::Exception
+exceptions. By 
+
+=head1 METHODS
+
+=head3 throw
+
+=head3 rethrow
+
+=head3 rethrow_as
+
+=head3 message
+
+=head3 isa
+
+=head3 as_string
+
+=head3 full_message
+
+=head3 description
+
+=head3 error
+
+=head1 EXTENDING
+

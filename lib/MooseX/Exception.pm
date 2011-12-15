@@ -118,7 +118,7 @@ sub _process_args {
 
 =head1 NAME
 
-MooseX::Exception - Moose based extendable exception framework
+MooseX::Exception - Extendable exception framework based on Moose
 
 =head1 SYNOPSIS
 

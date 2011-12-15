@@ -3,6 +3,8 @@ package MooseX::Exception::Role::Trace;
 # ============================================================================
 
 use Moose::Role;
+requires qw(message throw rethrow);
+
 use Devel::StackTrace;
 
 has 'trace' => (
@@ -82,3 +84,37 @@ sub as_string {
 
 no Moose::Role;
 1;
+
+=encoding utf8
+
+=head1 NAME
+
+MooseX::Exception::Role::Trace - Adds a full stacktrace to an exception class
+
+=head1 SYNOPSIS
+
+ package MyException;
+ use Moose;
+ extends qw(MooseX::Exception::Base)
+ with qw(MooseX::Exception::Role::Trace);
+ 1;
+
+=head1 DESCRIPTION
+
+This exception class role adds a full stacktrace via L<Devel::StackTrace> 
+to an exception class.
+
+=head1 METHODS
+
+=head3 trace
+
+Stacktrace object. L<Devel::StackTrace>
+
+=head3 show_trace
+
+Boolean value that defines if the stacktrace should be included in a
+human-readable errormessage.
+
+=head1 SEE ALSO
+
+L<Devel::StackTrace>, L<MooseX::Exception::Base>

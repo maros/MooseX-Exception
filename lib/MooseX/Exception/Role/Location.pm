@@ -3,6 +3,7 @@ package MooseX::Exception::Role::Location;
 # ============================================================================
 
 use Moose::Role;
+requires qw(message throw rethrow);
 
 has 'package'   => (
     is              => 'rw',
@@ -56,3 +57,40 @@ around 'BUILDARGS' => sub {
 
 no Moose::Role;
 1;
+
+=encoding utf8
+
+=head1 NAME
+
+MooseX::Exception::Role::Location - Information about the origin of the exception
+
+=head1 SYNOPSIS
+
+ package MyException;
+ use Moose;
+ extends qw(MooseX::Exception::Base)
+ with qw(MooseX::Exception::Role::Location);
+ 1;
+
+=head1 DESCRIPTION
+
+This exception class role adds basic information about the origin (package,
+file, line) of the exception to the exception class.
+
+=head1 METHODS
+
+=head3 package
+
+Origin package
+
+=head3 line
+
+Origin linenumber
+
+=head3 file
+
+Origin filename
+
+=head1 SEE ALSO
+
+L<MooseX::Exception::Base>

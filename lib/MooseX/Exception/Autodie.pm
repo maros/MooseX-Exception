@@ -45,3 +45,35 @@ sub _expand_tag {
 __PACKAGE__->meta->make_immutable;
 no Moose;
 1;
+
+=encoding utf8
+
+=head1 NAME
+
+MooseX::Exception::Autodie - An autodie exception
+
+=head1 DESCRIPTION
+
+Exceptions of this class are thrown if the "Autodie" exception featue 
+(L<MooseX::Exception::Feature::Autodie>) is loaded.
+
+=head1 METHODS
+
+This exception class extends the L<MooseX::Exception::Base> class.
+This exception consumes the L<MooseX::Exception::Role::Location> role.
+
+=head3 function
+
+=head3 context
+
+=head3 eval_error
+
+=head3 return
+
+=head3 args
+
+=head3 matches
+
+=head1 SEE ALSO
+
+L<autodie>
