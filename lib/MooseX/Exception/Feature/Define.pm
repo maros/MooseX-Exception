@@ -37,16 +37,6 @@ sub init_meta {
     return $meta_class;
 }
 
-sub caught {
-    my $exception = $@;
-    
-    return $exception 
-        unless $_[1];
-    
-    return unless blessed($exception) && $exception->isa( $_[1] );
-    return $exception;
-}
-
 sub exception ($;$) {
     my ($class,$code) = @_;
     
