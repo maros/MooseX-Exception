@@ -122,13 +122,110 @@ MooseX::Exception - Extendable exception framework based on Moose
 
 =head1 SYNOPSIS
 
- use MooseX::Exception qw(Define Autodie MyFeature);
+ use MooseX::Exception qw(Define MyFeature);
 
 =head1 DESCRIPTION
 
+MooseX::Exception provides a convinient way of handling exceptions in a
+convinient, modern an extedable way. It does so by defining a simple and 
+unified exception hierarchy and a mechanism to lexically add (and remove) 
+exception handling features to your code.
 
+In your code you simply load MooseX::Exception and specify which features
+to load. (Note: You class does not have to use Moose itself)
+
+ package MyClass;
+ use MooseX::Exception 'Define', 'MyFeature' => { some_arg => 1 };
+
+Later you can also unload selected features
+
+ no MooseX::Exception qw(Define);
+
+All exceptions thrown by any of the MooseX::Exception features is based
+on L<MooseX::Exception::Base>, thus providing an unified exception
+hierarchy.
+
+MooseX::Exception currently implements five convinient exception features.
+
+=over
+
+=item * Autodie
+
+Enables L<autodie> in the current scope, however if an exception occurs it
+will throw a L<MooseX::Exception::Autodie> exception instead of an 
+L<autodie::exception> exception.
+
+see <MooseX::Exception::Feature::Autodie>
+
+=item * Define
+
+This feature lets you define exception classes in a very compact way, 
+just like L<Exception::Class>. You can use almost all Moose functions like
+has, with and method modifiers in your exception class definitions.
+
+ use MooseX::Exception qw(Define);
+ 
+ exception "X" => define {
+    # calls extends('MooseX::Exception::Base') implicitly
+    with('Location');
+    description('basic exception');
+ };
+ 
+ exception "X2" => define {
+    extends('X');
+    description('slightly advanced exception');
+    has 'test' => (is => 'rw');
+    method 'some_method' => sub { ... };
+ };
+
+see <MooseX::Exception::Feature::Define>
+
+=item * Moose
+
+The 'Moose' feature tells Moose to throw L<MooseX::Exception::Moose>
+if an error occurs in your metaclass (eg. constraints not satisfied, 
+required value missing, ...)
+
+This feature can only be used if the calling package is using Moose. 
+
+see <MooseX::Exception::Feature::Moose>
+
+=item * TryCatch
+
+Enables a slightly extended version of L<Try-Tiny> in your package that allows
+conditional catch blocks. Furthermore all exceptions thrown inside a try
+block will be upgraded to L<MooseX::Exception::TryCatch> exceptions if
+possible.
+
+ use MooseX::Exception qw(TryCatch);
+ 
+ try {
+     X1->throw(message => 'Exception X');
+ }
+ where "X2" => catch {
+     say "Caught X2 exception";
+ }
+ where "X1" => catch {
+     say "Caught X1 exception";
+ }
+ catch {
+     say "Caught some exception";
+ }
+ finally {
+     say "This will be always run";
+ };
+ 
+see <MooseX::Exception::Feature::TryCatch>
+
+=item * Die
+
+
+
+=back
 
 =head1 EXTENDING
+
+
 
 =head1 CAVEATS 
 
@@ -141,7 +238,7 @@ L<Try-Tiny>, L<Exception-Class>, L<Autodie> and many more.
 
 Please report any bugs or feature requests to 
 C<bug-moosex-exception@rt.cpan.org>, or through the web interface at
-L<http://rt.cpan.org/Public/Bug/Report.html?Queue=MooseX-Exception>.  
+L<http://rt.cpan.org/Public/Bug/Report.html?Queue=MooseX-Exception>.
 I will be notified, and then you'll automatically be notified of progress on 
 your report as I make changes.
 
@@ -154,7 +251,7 @@ your report as I make changes.
 
 =head1 COPYRIGHT
 
-TEMPLATE is Copyright (c) 2011 Maroš Kollár.
+MooseX::Exception is Copyright (c) 2011-12 Maroš Kollár.
 
 This library is free software and may be distributed under the same terms as 
 perl itself.
