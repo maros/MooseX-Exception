@@ -43,18 +43,18 @@ sub import {
     
     # Determine which features to load
     foreach my $feature_requested (@features_requested) {
-        if (ref $feature_requested eq 'ARRAY') {
+        if (ref $feature_requested eq 'HASH') {
             if (defined $feature_toload_last) {
                 $features_toload{$feature_toload_last} = $feature_requested;
             }
         } else {
             if ($feature_requested eq ':all') {
                 foreach my $feature_all (__PACKAGE__->features_available) {
-                    $features_toload{$feature_all} = [];
+                    $features_toload{$feature_all} = {};
                 }
             } else {
                 my $feature_class = 'MooseX::Exception::Feature::'.ucfirst($feature_requested); # TODO camel case
-                $features_toload{$feature_class} = [];
+                $features_toload{$feature_class} = {};
                 $feature_toload_last = $feature_class;
             }
         }
@@ -70,7 +70,7 @@ sub import {
         Class::MOP::load_class($feature_toload);
         
         # Reset arguments for goto
-        @_ = ($feature_toload,@{$features_toload{$feature_toload}});
+        @_ = ($feature_toload,%{$features_toload{$feature_toload}});
         goto &{$feature_toload.'::import'};
     }
 }
