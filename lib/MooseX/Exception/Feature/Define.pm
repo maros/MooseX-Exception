@@ -83,9 +83,14 @@ sub with {
     
     if (defined $EXCEPTION_CLASS) {
         foreach my $element (@roles) {
-            unless (ref $element
-                || $element =~ /.+::.+/) {
-                push(@EXCEPTION_ROLES,'MooseX::Exception::Role::'.$element);
+            unless (ref $element) {
+                if ($element =~ m/^\+(.+)$/) {
+                    push(@EXCEPTION_ROLES,$1);
+                } elsif ($element !~ /.+::.+/) {
+                    push(@EXCEPTION_ROLES,'MooseX::Exception::Role::'.$element);
+                } else {
+                    push(@EXCEPTION_ROLES,$element);
+                }
             } else {
                 push(@EXCEPTION_ROLES,$element);
             }
