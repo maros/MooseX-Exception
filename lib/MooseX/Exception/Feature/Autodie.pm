@@ -38,8 +38,8 @@ MooseX::Exception::Feature::Autodie - Enable autodie behaviour
     open $fh,'/unknown/file';
     close $fh;
  };
- if ($@) {
-    print 'An error occured while opening a file '.$@->message
+ if (my $error = $@) {
+    print 'An error occured while opening a file '.$error->message;
  }
 
 =head1 DESCRIPTION
@@ -50,6 +50,6 @@ L<MooseX::Exception::Autodie> objects as exceptions.
 
 =head1 SEE ALSO
 
-L<autodie>
+L<autodie>, L<MooseX::Exception::Autodie>
 
 =cut

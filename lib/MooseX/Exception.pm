@@ -219,20 +219,58 @@ see <MooseX::Exception::Feature::TryCatch>
 
 =item * Die
 
+Will upgrade all exceptions originationg from the current class to 
+L<MooseX::Exception::Die> if possible.
 
+see <MooseX::Exception::Feature::Die>
 
 =back
 
 =head1 EXTENDING
 
+There are multiple ways how to extend MooseX::Exception
 
+=over
+
+=item * Extend the exception hierarchy by adding your own exceptions classes
+
+=item * Implement reusable roles for exception classes
+
+=item * Implement an exception feature
+
+=back
+
+The first two options are pretty straightforward: Just write a class/role that
+extends or augments L<MooseX::Exception::Base> or any of its subclasses.
+The "Define" (L<MooseX::Exception::Feature::Define>) feature helps you to 
+write exception clasesses in a very concise way. Exception roles should reside
+in the C<MooseX::Exception::Role::*> namespace
+
+When you are writing exception classes there are already few useful reusable 
+exception roles that you can use:
+
+=over
+
+=item * L<MooseX::Exception::Role::Counter>
+
+=item * L<MooseX::Exception::Role::Location>
+
+=item * L<MooseX::Exception::Role::ProcessInfo>
+
+=item * L<MooseX::Exception::Role::Trace>
+
+=back
+
+Exception features are a little bit trickier to write since you need
+to implement an import and unimport function. L<Moose::Exporter> certainly 
+makes this task much easier.
 
 =head1 CAVEATS 
 
 =head1 SEE ALSO
 
-Most idead and concepts are borrowed from other distributions such as 
-L<Try-Tiny>, L<Exception-Class>, L<Autodie> and many more.
+Most concepts and even some code parts are borrowed from other distributions 
+such as L<Try-Tiny>, L<TryCatch>, L<Exception-Class>, L<autodie>.
 
 =head1 SUPPORT
 
