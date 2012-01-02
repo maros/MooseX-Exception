@@ -10,10 +10,6 @@ our $VERSION = '1.00';
 
 use Class::MOP;
 
-use Module::Pluggable 
-    search_path => ['MooseX::Exception::Feature'],
-    sub_name => 'features_available';
-
 sub unimport {
     my ($proto,@features_requested) = @_;
     my $features_loaded = _process_caller($proto);
@@ -48,15 +44,9 @@ sub import {
                 $features_toload{$feature_toload_last} = $feature_requested;
             }
         } else {
-            if ($feature_requested eq ':all') {
-                foreach my $feature_all (__PACKAGE__->features_available) {
-                    $features_toload{$feature_all} = {};
-                }
-            } else {
-                my $feature_class = 'MooseX::Exception::Feature::'.ucfirst($feature_requested); # TODO camel case
-                $features_toload{$feature_class} = {};
-                $feature_toload_last = $feature_class;
-            }
+            my $feature_class = 'MooseX::Exception::Feature::'.ucfirst($element); # TODO camel case
+            $features_toload{$feature_class} ||= {};
+            $feature_toload_last = $feature_class;
         }
     }
     
