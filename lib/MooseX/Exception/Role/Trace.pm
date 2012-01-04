@@ -21,7 +21,7 @@ has 'show_trace' => (
 around 'BUILDARGS' => sub {
     my $orig = shift;
     my $self = shift;
-    my $args = MooseX::Exception::_process_args(@_);
+    my $args = MooseX::Exception::Base::_process_args(@_);
     
     my $ok = 0;
     $args->{trace} = Devel::StackTrace->new(

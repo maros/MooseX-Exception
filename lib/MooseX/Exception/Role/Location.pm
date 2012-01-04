@@ -21,7 +21,7 @@ has 'file'      => (
 around 'BUILDARGS' => sub {
     my $orig = shift;
     my $self = shift;
-    my $args = MooseX::Exception::_process_args(@_);
+    my $args = MooseX::Exception::Base::_process_args(@_);
     
     # Build basic exception info
     unless (exists $args->{line}

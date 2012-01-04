@@ -21,7 +21,7 @@ has [qw(sub_name has_args wantarray evaltext data instance depth last_error sub 
 around 'BUILDARGS' => sub {
     my $orig = shift;
     my $self = shift;
-    my $args = MooseX::Exception::_process_args(@_);
+    my $args = MooseX::Exception::Base::_process_args(@_);
     
     $args->{package} = delete $args->{pack};
     

@@ -26,14 +26,14 @@ sub throw {
     if (blessed $class) {
         $class->rethrow(@args)
     } else {
-        my $args = MooseX::Exception::_process_args(@args);
+        my $args = MooseX::Exception::Base::_process_args(@args);
         die $class->new($args);
     }
 }
 
 sub BUILDARGS {
     my $class = shift;
-    my $args = MooseX::Exception::_process_args(@_);
+    my $args = MooseX::Exception::Base::_process_args(@_);
     return $class->SUPER::BUILDARGS($args);
 }
 
@@ -43,7 +43,7 @@ sub description {
 
 sub rethrow {
     my ($self,@args) = @_;
-    my $args = MooseX::Exception::_process_args(@args);
+    my $args = MooseX::Exception::Base::_process_args(@args);
     
     my $meta = $self->meta;
     
@@ -60,7 +60,7 @@ sub rethrow {
 
 sub rethrow_as {
     my ($self,$class,@args) = @_;
-    my $args = MooseX::Exception::_process_args(@args);
+    my $args = MooseX::Exception::Base::_process_args(@args);
 
     my $meta_new = $class->meta;
     
@@ -93,6 +93,27 @@ sub isa {
 sub full_message {
     my ($self) = @_;
     return $self->message;
+}
+
+sub _process_args {
+    my $return = {};
+    if (scalar @_) {
+        if (scalar @_ == 1) {
+            if (ref($_[0]) eq 'HASH') {
+                # Shalow copy so that we do not alter anything
+                $return = { %{$_[0]} };
+            } else {
+                $return = { message => $_[0] };
+            }
+        } elsif (scalar(@_) % 2 == 0) {
+            $return = { @_ };
+        } else {
+            $return = { message => shift, @_ };
+        }
+    }
+    $return->{message} ||= delete $return->{error}
+        if exists $return->{error};
+    return $return;
 }
 
 __PACKAGE__->meta->make_immutable;
