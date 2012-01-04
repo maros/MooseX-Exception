@@ -12,37 +12,58 @@ use Class::MOP;
 
 sub unimport {
     my ($proto,@features_requested) = @_;
-    my $features_loaded = _process_caller($proto);
     
+    # Get caller and class
+    my( $package, undef, undef) = caller(0);
+    
+    # Get symbol
+    my $features_loaded = _get_caller_symbols($package);
+    
+    # Try to get list of features to unload
     if (scalar @features_requested) {
         @features_requested = map { 'MooseX::Exception::Feature::'.$_ } @features_requested;
     } else {
         @features_requested = keys %{$features_loaded}
     }
     
-    foreach my $feature_requested (@features_requested) {
+    # Loop all features that should be unloaded
+    foreach my $feature_class (@features_requested) {
         next
-            unless defined $features_loaded->{$feature_requested};
-            
-        @_ = ($feature_requested);
-        goto &{$feature_requested.'::unimport'};
+            unless defined $features_loaded->{$feature_class};
         
-        delete $features_loaded->{$feature_requested};
+        $package->moosex_exception_caller($feature_class,'unimport');
+        
+        delete $features_loaded->{$feature_class};
+    }
+    
+    
+    # Unload our symbols if all features have been unloaded
+    if (scalar keys %{$features_loaded} == 0) {
+        my $stash = Package::Stash->new($package);
+        $stash->remove_symbol('%moosex_exception_features_loaded');
+        $stash->remove_symbol('&moosex_exception_caller');
     }
 }
 
 sub import {
-    my ($proto,@features_requested) = @_;
-    my $features_loaded = _process_caller($proto);
+    my ($proto,@args) = @_;
+    
+    # Get caller and class
+    my( $package ) = caller();
+    
+    # Get symbol
+    my $features_loaded = _get_caller_symbols($package);
     
     my (%features_toload,$feature_toload_last);
     
     # Determine which features to load
-    foreach my $feature_requested (@features_requested) {
-        if (ref $feature_requested eq 'HASH') {
+    foreach my $element (@args) {
+        # Extra arguments
+        if (ref $element) {
             if (defined $feature_toload_last) {
-                $features_toload{$feature_toload_last} = $feature_requested;
+                $features_toload{$feature_toload_last} = $element;
             }
+        # Feature
         } else {
             my $feature_class = 'MooseX::Exception::Feature::'.ucfirst($element); # TODO camel case
             $features_toload{$feature_class} ||= {};
@@ -51,58 +72,56 @@ sub import {
     }
     
     # Load all selected features
-    foreach my $feature_toload (keys %features_toload) {
+    foreach my $feature_class (keys %features_toload) {
+        # Check if feature is already loaded
         next
-            if (exists $features_loaded->{$feature_toload});
+            if (exists $features_loaded->{$feature_class});
         
-        $features_loaded->{$feature_toload} = $features_toload{$feature_toload};
+        $features_loaded->{$feature_class} = $features_toload{$feature_class};
+        Class::MOP::load_class($feature_class);
         
-        Class::MOP::load_class($feature_toload);
-        
-        # Reset arguments for goto
-        @_ = ($feature_toload,%{$features_toload{$feature_toload}});
-        goto &{$feature_toload.'::import'};
+        $package->moosex_exception_caller($feature_class,'import',$features_toload{$feature_class});
     }
 }
 
-sub _process_caller {
-    my ($proto) = @_;
+sub _get_caller_symbols {
+    my ($package) = @_;
     
-    # Get caller and class
-    my $class = ref $proto || $proto;
-    my( $package, undef, undef) = caller(1);
+    my $stash = Package::Stash->new($package);
     
-    my $export_name = $package."::moosex_exception_features_loaded";
-    
-    # Generate symbol in caller package
-    no strict 'refs';
-    unless (defined ${$export_name}) {
-        ${$export_name} = {};
-    }
-    
-    return ${$export_name};
-}
-
-sub _process_args {
-    my $return = {};
-    if (scalar @_) {
-        if (scalar @_ == 1) {
-            if (ref($_[0]) eq 'HASH') {
-                # Shalow copy so that we do not alter anything
-                $return = { %{$_[0]} };
-            } else {
-                $return = { message => $_[0] };
+    # Check if our symbols already exist
+    unless ($stash->has_symbol('%moosex_exception_features_loaded')) {
+        my($filename);
+        for my $level (0..10) {
+            my ($caller_package,$caller_filename) = caller($level);
+            if ($caller_package eq $package) {
+                $filename = $caller_filename;
+                last;
             }
-        } elsif (scalar(@_) % 2 == 0) {
-            $return = { @_ };
-        } else {
-            $return = { message => shift, @_ };
         }
+        
+        #TODO: Die if $filename is empty
+        
+        unless ($stash->has_symbol('&moosex_exception_caller')) {
+            # ugly hack to ensure correct caller
+            my $exception_callback = 'package '.$package.' {
+                sub moosex_exception_caller {
+#line 1 "'.$filename.'"
+                    my $self = shift;
+                    my $class = shift;
+                    my $method = shift;
+                    $class->$method(@_);
+                }
+            }';
+            eval($exception_callback);
+        }
+        $stash->add_symbol('%moosex_exception_features_loaded',{ });
     }
-    $return->{message} ||= delete $return->{error}
-        if exists $return->{error};
-    return $return;
+    
+    return $stash->get_symbol('%moosex_exception_features_loaded');
 }
+
+
 
 =encoding utf8
 
@@ -234,7 +253,7 @@ The first two options are pretty straightforward: Just write a class/role that
 extends or augments L<MooseX::Exception::Base> or any of its subclasses.
 The "Define" (L<MooseX::Exception::Feature::Define>) feature helps you to 
 write exception clasesses in a very concise way. Exception roles should reside
-in the C<MooseX::Exception::Role::*> namespace
+in the C<MooseX::Exception::Role::*> namespace.
 
 When you are writing exception classes there are already few useful reusable 
 exception roles that you can use:
