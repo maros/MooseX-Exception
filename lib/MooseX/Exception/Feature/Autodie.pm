@@ -1,23 +1,49 @@
 # ============================================================================
 package MooseX::Exception::Feature::Autodie;
 # ============================================================================
-use utf8;
 
 use strict;
 use warnings;
 
+use base qw(autodie);
+
+our %EXCEPTION_CLASS;
+
 use MooseX::Exception::Autodie;
 
-use autodie ();
-our @ISA = qw(autodie);
+sub throw {
+    my ($class, @args) = @_;
 
-sub exception_class { return "MooseX::Exception::Autodie" }; # TODO customize
+    my $exception_class = "MooseX::Exception::Autodie";
+    my ($package) = caller(0);
+    if (defined $EXCEPTION_CLASS{$package}) {
+        $exception_class = $EXCEPTION_CLASS{$package};
+    }
+
+    return $exception_class->new(@args);
+}
 
 sub import {
+    my ($class,$params) = @_;
+    
+    # Calculate args
+    $params->{exception_class} ||= "MooseX::Exception::Autodie";
+    $params->{args} ||= [];
+    
+    # Get caller
+    my ($package,undef,undef) = caller(0);
+    
+    $EXCEPTION_CLASS{$package} = $params->{exception_class};
+    
+    # Modify @_ for goto
+    @_ = ($class,@{$params->{args}});
+    
     goto &autodie::import;
 }
 
 sub unimport {
+    my ($class) = @_;
+    
     goto &autodie::unimport;
 }
 
