@@ -111,15 +111,6 @@ sub method {
     $meta->add_method($name => $method);
 }
 
-#exception 'MooseX::Exception::Exception::Base' => sub{
-#    description('Internal MooseX::Exception');
-#};
-#
-#sub super {
-#    return unless $Moose::SUPER_BODY;
-#    $Moose::SUPER_BODY->(@Moose::SUPER_ARGS);
-#}
-
 1;
 
 =encoding utf8
