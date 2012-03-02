@@ -3,9 +3,9 @@
 # t/10_feature_die.t - handle die
 
 use Test::Most tests => 13 + 1;
-use Test::NoWarnings;
+#use Test::NoWarnings;
 
-my ($x1,$x2,$x3,$x5,$x6);
+my ($x1,$x2,$x3,$x5,$x6,$x7);
 {
     package test::10die::01;
     use MooseX::Exception qw(Die);
@@ -65,3 +65,24 @@ is($x5->message,'test','Exception ok');
 
 is(ref($x6),'','Not an object - unimport');
 like($x6,qr/test/,'Die ok');
+
+
+{
+    package t::test10::die;
+    use Moose;
+    extends qw(MooseX::Exception::Die);
+}
+
+{
+    package test::10die::03;
+    use MooseX::Exception 'Die' => { exception_class => 't::test10::die' };
+    
+    eval {
+        die('test');
+    };
+    $x7 = $@;
+}
+
+isa_ok($x7,'t::test10::die');
+is($x7->message,'test','Exception ok');
+
