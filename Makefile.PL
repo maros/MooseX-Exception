@@ -8,7 +8,6 @@ my $from = 'lib/MooseX/Exception.pm';
 name            'MooseX-Exception';
 all_from        $from;
 readme_from     $from;
-readme_markdown_from $from;
 
 perl_version    '5.008';
 
