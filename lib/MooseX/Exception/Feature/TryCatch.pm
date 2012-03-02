@@ -12,6 +12,8 @@ Moose::Exporter->setup_import_methods(
     as_is       => [qw(try catch where finally)],
 );
 
+sub exception_class { return "MooseX::Exception::TryCatch" }; # TODO customize
+
 sub try(&;@) {
     my ($try,@parts) = @_;
     

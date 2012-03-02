@@ -9,6 +9,8 @@ use warnings;
 use MooseX::Exception::Die;
 use Moose::Exporter;
 
+sub exception_class { return "MooseX::Exception::Die" }; # TODO customize
+
 sub die {
     my (@args) = @_;
     
@@ -22,7 +24,8 @@ sub die {
     if (ref $message) {
         die($message);
     } else {
-        MooseX::Exception::Die->new($message)->throw;
+        my $exception_class = exception_class();
+        $exception_class->new($message)->throw;
     }
 }
 
