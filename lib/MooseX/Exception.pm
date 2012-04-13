@@ -8,118 +8,190 @@ use warnings;
 our $AUTHORITY = 'cpan:MAROS';
 our $VERSION = '1.00';
 
-use Class::MOP;
+use Moose::Exporter;
 
-sub unimport {
-    my ($proto,@features_requested) = @_;
-    
-    # Get caller and class
-    my( $package, undef, undef) = caller(0);
-    
-    # Get symbol
-    my $features_loaded = _get_caller_symbols($package);
-    
-    # Try to get list of features to unload
-    if (scalar @features_requested) {
-        @features_requested = map { 'MooseX::Exception::Feature::'.$_ } @features_requested;
-    } else {
-        @features_requested = keys %{$features_loaded}
-    }
-    
-    # Loop all features that should be unloaded
-    foreach my $feature_class (@features_requested) {
-        next
-            unless defined $features_loaded->{$feature_class};
-        
-        $package->moosex_exception_caller($feature_class,'unimport');
-        
-        delete $features_loaded->{$feature_class};
-    }
-    
-    
-    # Unload our symbols if all features have been unloaded
-    if (scalar keys %{$features_loaded} == 0) {
-        my $stash = Package::Stash->new($package);
-        $stash->remove_symbol('%moosex_exception_features_loaded');
-        $stash->remove_symbol('&moosex_exception_caller');
-    }
-}
+my ($IMPORT,$UNIMPORT,$INIT_META) = Moose::Exporter->build_import_methods(
+    install             => [qw(init_meta)],
+);
+
+my %PLUGIN_SPEC;
 
 sub import {
-    my ($proto,@args) = @_;
+    my ( $class, @plugins ) = @_;
     
-    # Get caller and class
-    my( $package ) = caller();
+    # Get caller
+    my ($caller_class) = caller();
     
-    # Get symbol
-    my $features_loaded = _get_caller_symbols($package);
-    
-    my (%features_toload,$feature_toload_last);
-    
-    # Determine which features to load
-    foreach my $element (@args) {
-        # Extra arguments
+    # Loop all requested plugins
+    my (%plugin_classes,$last_plugin);
+    foreach my $element (@plugins) {
         if (ref $element) {
-            if (defined $feature_toload_last) {
-                $features_toload{$feature_toload_last} = $element;
+            if (defined $last_plugin) {
+                $plugin_classes{$last_plugin} = $element;
+            } else {
+                croak('Something is wrong here');
             }
-        # Feature
         } else {
-            my $feature_class = 'MooseX::Exception::Feature::'.ucfirst($element); # TODO camel case
-            $features_toload{$feature_class} ||= {};
-            $feature_toload_last = $feature_class;
+            my $plugin_class = 'MooseX::Exception::Feature::'.$element;
+            
+            Class::Load::load_class($plugin_class);
+            
+            $plugin_classes{$plugin_class} = [];
+            $last_plugin = $element;
         }
     }
     
-    # Load all selected features
-    foreach my $feature_class (keys %features_toload) {
-        # Check if feature is already loaded
-        next
-            if (exists $features_loaded->{$feature_class});
-        
-        $features_loaded->{$feature_class} = $features_toload{$feature_class};
-        Class::MOP::load_class($feature_class);
-        
-        $package->moosex_exception_caller($feature_class,'import',$features_toload{$feature_class});
+    # Store plugin spec
+    $PLUGIN_SPEC{$caller_class} = \%plugin_classes;
+    
+    # Call Moose-Exporter generated importer
+    $class->$IMPORT( { into => $caller_class } );
+    
+    # Call importer foll all feature classes
+    foreach my $plugin_class (keys %plugin_classes) {
+        $plugin_class->import( { into => $caller_class, params => $plugin_classes{$plugin_class} } );
     }
 }
 
-sub _get_caller_symbols {
-    my ($package) = @_;
+sub unimport {
+    my ( $class, @plugins ) = @_;
+
+
+    # Get caller
+    my ($caller_class) = caller();
     
-    my $stash = Package::Stash->new($package);
+warn "UNIMPORT $class FROM $caller_class";
     
-    # Check if our symbols already exist
-    unless ($stash->has_symbol('%moosex_exception_features_loaded')) {
-        my($filename);
-        for my $level (0..10) {
-            my ($caller_package,$caller_filename) = caller($level);
-            if ($caller_package eq $package) {
-                $filename = $caller_filename;
-                last;
-            }
-        }
-        
-        #TODO: Die if $filename is empty
-        
-        unless ($stash->has_symbol('&moosex_exception_caller')) {
-            # ugly hack to ensure correct caller
-            my $exception_callback = 'package '.$package.' {
-                sub moosex_exception_caller {
-#line 1 "'.$filename.'"
-                    my $self = shift;
-                    my $class = shift;
-                    my $method = shift;
-                    $class->$method(@_);
-                }
-            }';
-            eval($exception_callback);
-        }
-        $stash->add_symbol('%moosex_exception_features_loaded',{ });
+    unless (scalar @plugins) {
+        @plugins = keys %{$PLUGIN_SPEC{$caller_class}};    
     }
     
-    return $stash->get_symbol('%moosex_exception_features_loaded');
+    # Loop all requested plugins
+    foreach my $element (@plugins) {
+        my $plugin_class = 'MooseX::Exception::Feature::'.$element;
+        
+        if (delete $PLUGIN_SPEC{$caller_class}{$plugin_class}) {
+            $plugin_class->unimport($caller_class);
+        }
+    }
+    
+    if (scalar keys %{$PLUGIN_SPEC{$caller_class}} == 0) {
+        $class->$UNIMPORT($caller_class);
+        delete $PLUGIN_SPEC{$caller_class};
+    }
 }
+#
+#
+#sub unimport {
+#    my ($proto,@features_requested) = @_;
+#    
+#    # Get caller and class
+#    my( $package, undef, undef) = caller(0);
+#    
+#    # Get symbol
+#    my $features_loaded = _get_caller_symbols($package);
+#    
+#    # Try to get list of features to unload
+#    if (scalar @features_requested) {
+#        @features_requested = map { 'MooseX::Exception::Feature::'.$_ } @features_requested;
+#    } else {
+#        @features_requested = keys %{$features_loaded}
+#    }
+#    
+#    # Loop all features that should be unloaded
+#    foreach my $feature_class (@features_requested) {
+#        next
+#            unless defined $features_loaded->{$feature_class};
+#        
+#        $package->moosex_exception_caller($feature_class,'unimport');
+#        
+#        delete $features_loaded->{$feature_class};
+#    }
+#    
+#    
+#    # Unload our symbols if all features have been unloaded
+#    if (scalar keys %{$features_loaded} == 0) {
+#        my $stash = Package::Stash->new($package);
+#        $stash->remove_symbol('%moosex_exception_features_loaded');
+#        $stash->remove_symbol('&moosex_exception_caller');
+#    }
+#}
+#
+#sub import {
+#    my ($proto,@args) = @_;
+#    
+#    # Get caller and class
+#    my( $package ) = caller();
+#    
+#    # Get symbol
+#    my $features_loaded = _get_caller_symbols($package);
+#    
+#    my (%features_toload,$feature_toload_last);
+#    
+#    # Determine which features to load
+#    foreach my $element (@args) {
+#        # Extra arguments
+#        if (ref $element) {
+#            if (defined $feature_toload_last) {
+#                $features_toload{$feature_toload_last} = $element;
+#            }
+#        # Feature
+#        } else {
+#            my $feature_class = 'MooseX::Exception::Feature::'.ucfirst($element); # TODO camel case
+#            $features_toload{$feature_class} ||= {};
+#            $feature_toload_last = $feature_class;
+#        }
+#    }
+#    
+#    # Load all selected features
+#    foreach my $feature_class (keys %features_toload) {
+#        # Check if feature is already loaded
+#        next
+#            if (exists $features_loaded->{$feature_class});
+#        
+#        $features_loaded->{$feature_class} = $features_toload{$feature_class};
+#        Class::Load::load_class($feature_class);
+#        
+#        $package->moosex_exception_caller($feature_class,'import',$features_toload{$feature_class});
+#    }
+#}
+#
+#sub _get_caller_symbols {
+#    my ($package) = @_;
+#    
+#    my $stash = Package::Stash->new($package);
+#    
+#    # Check if our symbols already exist
+#    unless ($stash->has_symbol('%moosex_exception_features_loaded')) {
+#        my($filename);
+#        for my $level (0..10) {
+#            my ($caller_package,$caller_filename) = caller($level);
+#            if ($caller_package eq $package) {
+#                $filename = $caller_filename;
+#                last;
+#            }
+#        }
+#        
+#        #TODO: Die if $filename is empty
+#        
+#        unless ($stash->has_symbol('&moosex_exception_caller')) {
+#            # ugly hack to ensure correct caller
+#            my $exception_callback = 'package '.$package.' {
+#                sub moosex_exception_caller {
+##line 1 "'.$filename.'"
+#                    my $self = shift;
+#                    my $class = shift;
+#                    my $method = shift;
+#                    $class->$method(@_);
+#                }
+#            }';
+#            eval($exception_callback);
+#        }
+#        $stash->add_symbol('%moosex_exception_features_loaded',{ });
+#    }
+#    
+#    return $stash->get_symbol('%moosex_exception_features_loaded');
+#}
 
 
 
