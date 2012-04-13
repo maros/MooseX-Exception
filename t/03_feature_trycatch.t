@@ -2,7 +2,7 @@
 
 # t/02_extended.t - extended tests
 
-use Test::Most tests => 15 + 1;
+use Test::Most tests => 18 + 1;
 use Test::NoWarnings;
 
 use MooseX::Exception qw(TryCatch);
@@ -114,3 +114,31 @@ try {
 } catch {
     fail('Should not catch')
 };
+
+# Test 8 - return
+my $retval1 = try {
+    return 'hase'
+} catch {
+    fail('Should not catch')
+};
+
+is($retval1,'hase','Returnvalue ok');
+
+# Test 9 - return
+my $retval2 = try {
+    return 0
+} catch {
+    fail('Should not catch')
+};
+
+is($retval2,0,'Returnvalue ok');
+
+# Test 10 - return
+
+my $retval3 = try {
+    die('Something')
+} catch {
+    return 'This went bad';
+};
+
+is($retval3,'This went bad','Returnvalue ok');
