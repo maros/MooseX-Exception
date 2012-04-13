@@ -36,8 +36,8 @@ sub import {
             
             Class::Load::load_class($plugin_class);
             
-            $plugin_classes{$plugin_class} = [];
-            $last_plugin = $element;
+            $plugin_classes{$plugin_class} = {};
+            $last_plugin = $plugin_class;
         }
     }
     
@@ -56,21 +56,20 @@ sub import {
 sub unimport {
     my ( $class, @plugins ) = @_;
 
-
     # Get caller
     my ($caller_class) = caller();
     
-warn "UNIMPORT $class FROM $caller_class";
-    
+    # Get all plugins
     unless (scalar @plugins) {
-        @plugins = keys %{$PLUGIN_SPEC{$caller_class}};    
+        keys %{$PLUGIN_SPEC{$caller_class}};    
     }
     
     # Loop all requested plugins
     foreach my $element (@plugins) {
-        my $plugin_class = 'MooseX::Exception::Feature::'.$element;
+        my $plugin_class = 'MooseX::Exception::Feature::'.$element
+            unless $element =~ m/::/;
         
-        if (delete $PLUGIN_SPEC{$caller_class}{$plugin_class}) {
+        if (delete $PLUGIN_SPEC{$caller_class}->{$plugin_class}) {
             $plugin_class->unimport($caller_class);
         }
     }
@@ -79,6 +78,14 @@ warn "UNIMPORT $class FROM $caller_class";
         $class->$UNIMPORT($caller_class);
         delete $PLUGIN_SPEC{$caller_class};
     }
+}
+
+sub _exception_settings_for {
+    my ($class,$caller_class,$plugin_class) = @_;
+
+    $plugin_class = 'MooseX::Exception::Feature::'.$plugin_class
+        unless $plugin_class =~ m/::/;
+    return $PLUGIN_SPEC{$caller_class}->{$plugin_class} || {};
 }
 #
 #
