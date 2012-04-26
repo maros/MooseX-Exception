@@ -9,7 +9,7 @@ use Test::NoWarnings;
     package t::test05::01;
     use Test::Most;
     
-    use MooseX::Exception qw(autodie);
+    use MooseX::Exception qw(Autodie);
     
     eval {
         my $fh;

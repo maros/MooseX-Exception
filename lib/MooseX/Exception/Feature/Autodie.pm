@@ -25,18 +25,24 @@ sub throw {
 
 sub import {
     my ($class,$params) = @_;
-    
+
     # Calculate args
     $params->{exception_class} ||= "MooseX::Exception::Autodie";
-    $params->{args} ||= [];
-    
+    $params->{params} ||= [];
+
     # Get caller
     my ($package,undef,undef) = caller(0);
     
     $EXCEPTION_CLASS{$package} = $params->{exception_class};
     
+    use Data::Dumper;
+    {
+      local $Data::Dumper::Maxdepth = 2;
+      warn __FILE__.':line'.__LINE__.':'.Dumper(\@_);
+    }
+    
     # Modify @_ for goto
-    @_ = ($class,@{$params->{args}});
+    @_ = ($class,@{$params->{params}});
     
     goto &autodie::import;
 }
@@ -44,7 +50,7 @@ sub import {
 sub unimport {
     my ($class) = @_;
     
-    goto &autodie::unimport;
+    &autodie::unimport;
 }
 
 1;
