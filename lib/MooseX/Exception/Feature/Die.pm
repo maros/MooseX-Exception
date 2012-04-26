@@ -9,10 +9,12 @@ use warnings;
 use MooseX::Exception::Die;
 use Moose::Exporter;
 
-sub exception_class { return "MooseX::Exception::Die" }; # TODO customize
+Moose::Exporter->setup_import_methods(
+    with_caller => [ 'die' ],
+);
 
-sub die {
-    my (@args) = @_;
+sub die(@) {
+    my ($caller,@args) = @_;
     
     my $message;
     if (scalar @args > 1) {
@@ -24,13 +26,9 @@ sub die {
     if (ref $message) {
         die($message);
     } else {
-        my $exception_class = exception_class();
+        my $exception_class = MooseX::Exception->_exception_settings_for($caller,__PACKAGE__)->{exception_class} || "MooseX::Exception::Die";
         $exception_class->new($message)->throw;
     }
 }
-
-Moose::Exporter->setup_import_methods(
-    as_is     => [ 'die' ],
-);
 
 1;
