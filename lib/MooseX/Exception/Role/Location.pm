@@ -35,13 +35,18 @@ around 'BUILDARGS' => sub {
             $args->{file} ||= $trace_frame->filename;
             $args->{line} ||= $trace_frame->line;
         } else {
-            for (1..10) {
+            for (1..15) {
                 my ($package_test) = caller($_);
                 last
                     unless defined $package_test;
+                next
+                    if $package_test eq '';
                 if ($package_test->isa('MooseX::Exception::Base')
                     || $package_test =~ m/^MooseX::Exception::Feature::/) {
                     my ($package, $file, $line) = caller($_ + 1);
+                    if ($package eq 'Moose::Exporter') {
+                        ($package, $file, $line) = caller($_ + 2);
+                    }
                     $args->{package} ||= $package;
                     $args->{file} ||= $file;
                     $args->{line} ||= $line;
